@@ -55,7 +55,7 @@ CPU:AMD 7502P RAM:按需配置 DRIVES:按需配置 Connection:1 GBit/s
 
 添加全局变量
 
-    ln -s /usr/bin/geth /root/bsc/build/bin/geth
+    ln -s /root/bsc/build/bin/geth /usr/bin/geth 
 
 使用`geth version`确认安装正确
 
