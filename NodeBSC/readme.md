@@ -1,5 +1,7 @@
 # bsc 全节点搭建教程
 
+> 本文保留 2022 年 Geth 1.1.12 的部署记录。部署当前版本，请遵循 [BNB Chain 全节点文档](https://docs.bnbchain.org/bnb-smart-chain/developers/node_operators/full_node/)，并使用同一发行版的二进制和配置文件。
+
 ## 一、服务器配置
 >系统：Linux(Ubuntu 20.04)
 > 
@@ -33,48 +35,24 @@ CPU:AMD 7502P RAM:按需配置 DRIVES:按需配置 Connection:1 GBit/s
     
 ### 安装环编译境及其他工具
 
-    apt install wget git screen gcc automake autoconf libtool make unzip liblz4-tool aria2
-
-### 安装golang(用于编译geth)
-
-    apt install golang -y
-
-使用`go version`确认安装正确
-
-    root@Ubuntu-2004-focal-64-minimal ~ # go version
-    go version go1.13.8 linux/amd64
-
+    apt install wget curl git screen gcc automake autoconf libtool make unzip liblz4-tool aria2
 
 ## 三、节点安装部署
 
-### 安装geth
+### 安装历史版本
 
-    git clone https://github.com/bnb-chain/bsc
-    cd bsc
-    make geth
+以下命令使用 [v1.1.12 发布页](https://github.com/bnb-chain/bsc/releases/tag/v1.1.12) 上的 Linux 二进制和同一版本的主网配置。
 
-添加全局变量
-
-    ln -s /root/bsc/build/bin/geth /usr/bin/geth 
-
-使用`geth version`确认安装正确
-
-    root@Ubuntu-2004-focal-64-minimal ~ # geth version
-    Geth
-    Version: 1.1.12
-    Git Commit: 723863ee564e6b10d5c0218aad56aa287bdfa2f9
-    Git Commit Date: 20220808
-    Architecture: amd64
-    Go Version: go1.13.8
-    Operating System: linux
-    GOPATH=
-    GOROOT=go
-
-### 配置创世区块
-
-    wget   $(curl -s https://api.github.com/repos/bnb-chain/bsc/releases/latest |grep browser_ |grep mainnet |cut -d\" -f4)
-    unzip mainnet.zip
-    geth --datadir node init genesis.json
+```sh
+mkdir -p /root/bsc
+cd /root/bsc
+wget https://github.com/bnb-chain/bsc/releases/download/v1.1.12/geth_linux -O geth
+wget https://github.com/bnb-chain/bsc/releases/download/v1.1.12/mainnet.zip
+chmod +x geth
+./geth version
+unzip mainnet.zip
+./geth --datadir node init genesis.json
+```
 
 ### 下载BSC快照
 
@@ -101,17 +79,7 @@ CPU:AMD 7502P RAM:按需配置 DRIVES:按需配置 Connection:1 GBit/s
     
     tar -I lz4 -xvf geth.tar.lz4
 
-解压完成后,将解压出的 chaindata 和 triecache 移动到 /bsc/node/geth/ 目录下
-    
-    rm -rf /root/bsc/node/geth/chaindata #删除多余文件夹
-    mv /root/server/data-seed/geth/chaindata /root/bsc/node/geth
-    mv /root/server/data-seed/geth/triecache /root/bsc/node/geth
-    exit
-
-删除快照
-
-    rm -rf /root/geth.tar.lz4
-    rm -rf /root/server
+对于新节点，按 [BSC 快照仓库](https://github.com/bnb-chain/bsc-snapshots) 的说明将解压文件放到对应的数据目录。
 
 ## 四、运行节点
 
@@ -119,25 +87,26 @@ CPU:AMD 7502P RAM:按需配置 DRIVES:按需配置 Connection:1 GBit/s
     
     vi /root/bsc/config.toml
 
-> HTTPHost: HTTP-RPC服务连接白名单，此参数的值默认为 "localhost"，仅允许本地可访问，如果需要外网访问节点请设置为："0.0.0.0"
+> HTTPHost：HTTP-RPC 的监听地址。本机访问可使用 `127.0.0.1`。
 >
 > HTTPPort：http协议rpc端口
 
->WSHost：websocket服务连接白名单，此参数的值默认为 "localhost"，仅允许本地可访问，可设置为："0.0.0.0"
+> WSHost：WebSocket 的监听地址。本机访问可使用 `127.0.0.1`。
 >
 >WSPort：websocket协议rpc端口
 
 ### 运行geth
 
     screen -S bsc	#创建bsc节点启动窗口
-    geth --config ./config.toml --datadir ./node --diffsync --cache 56000 --rpc.allow-unprotected-txs --txlookuplimit 0
+    cd /root/bsc
+    ./geth --config ./config.toml --datadir ./node --syncmode full --cache 56000 --txlookuplimit 0
 退出窗口
 
 ## 五、查看节点状态
 
 启动几分钟后，进入控制台查看节点状态
 
-    geth attach http://127.0.0.1:8545 #按照自己端口来
+    /root/bsc/geth attach http://127.0.0.1:8545 #按照自己端口来
 
     >eth.syncing #查看区块同步情况
 
